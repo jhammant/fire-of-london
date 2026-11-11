@@ -726,6 +726,23 @@ describe('app', () => {
     assert.deepEqual(JSON.parse(win.localStorage.getItem('fire-of-london.prefs.v1')), { tutorialSeen: true });
   });
 
+  test('Help opens a collapsed bottom sheet before the tutorial starts', async () => {
+    // Arrange
+    const { doc, app, tutorial } = makeApp();
+    app.start();
+    await settle();
+    doc.getElementById('btn-sheet').click();
+    const collapsed = doc.getElementById('btn-sheet').getAttribute('aria-expanded');
+    // Act
+    doc.getElementById('btn-help').click();
+    // Assert
+    assert.equal(collapsed, 'false');
+    assert.equal(tutorial.starts, 1);
+    assert.equal(doc.getElementById('btn-sheet').getAttribute('aria-expanded'), 'true');
+    assert.equal(doc.getElementById('panel').classList.contains('is-collapsed'), false);
+    assert.equal(doc.getElementById('app').classList.contains('sheet-collapsed'), false);
+  });
+
   test('game over shows the debrief, then the quiz if chosen, then the start menu, and clears the save', async () => {
     // Arrange
     const { doc, win, app, screens } = makeApp({
@@ -802,9 +819,9 @@ describe('app', () => {
     await settle();
     // Act
     doc.getElementById('btn-zoom').click();
+    doc.getElementById('btn-help').click();
     doc.getElementById('btn-sheet').click();
     doc.getElementById('btn-chronicle').click();
-    doc.getElementById('btn-help').click();
     doc.getElementById('btn-menu').click();
     win.fire('resize');
     await settle();

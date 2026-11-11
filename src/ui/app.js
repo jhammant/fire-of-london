@@ -102,7 +102,7 @@ export function createApp({ doc, win, engine, history, mapView, screens, tutoria
     renderAll();
     panel.announce(controller.live());
     focusMap();
-    if (wantsTutorial) coach.start();
+    if (wantsTutorial) startTutorial();
     else storage.savePrefs({ tutorialSeen: true });
     await showCards(cards);
   }
@@ -191,13 +191,24 @@ export function createApp({ doc, win, engine, history, mapView, screens, tutoria
     byId('btn-zoom').setAttribute('aria-pressed', next === 2 ? 'true' : 'false');
   }
 
-  function toggleSheet() {
+  // The bottom sheet only collapses on phones (styles.css); on desktop these flags have no effect.
+  function setSheet(open) {
     const button = byId('btn-sheet');
-    const open = button.getAttribute('aria-expanded') === 'false';
+    if ((button.getAttribute('aria-expanded') !== 'false') === open) return;
     button.setAttribute('aria-expanded', open ? 'true' : 'false');
     byId('panel').classList.toggle('is-collapsed', !open);
     byId('app').classList.toggle('sheet-collapsed', !open);
     view.resize();
+  }
+
+  function toggleSheet() {
+    setSheet(byId('btn-sheet').getAttribute('aria-expanded') === 'false');
+  }
+
+  // The tutorial points at panel elements, so the sheet must be open while it runs.
+  function startTutorial() {
+    setSheet(true);
+    coach.start();
   }
 
   function onClick(id, handler) {
@@ -213,7 +224,7 @@ export function createApp({ doc, win, engine, history, mapView, screens, tutoria
       if (!busy && !dialogs.isOpen()) guard(openMenu());
     });
     onClick('btn-help', () => {
-      if (controller.hasGame() && !coach.isActive()) coach.start();
+      if (controller.hasGame() && !coach.isActive()) startTutorial();
     });
     onClick('btn-zoom', toggleZoom);
     onClick('btn-sheet', toggleSheet);
