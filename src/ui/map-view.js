@@ -55,13 +55,16 @@ const FLICKER_MS = 80;
 const FLICKER_CYCLE_MS = 1400;
 const MAX_SPARKS = 60;
 const MAX_BASE_PIXELS = 8e6;
+// The largest canvas every browser will draw into (iOS Safari refuses more than 4096 x 4096
+// pixels of area). Only a backing store above this is scaled down; below it the measured
+// devicePixelRatio is used as is.
+const MAX_BACKING_PIXELS = 4096 * 4096;
 const LABEL_MIN_TILE = 18;
 const TITLE = 'The City of London, 1666';
 const ARIA_PREFIX = 'Map of the City of London.';
 const ARIA_EMPTY = `${ARIA_PREFIX} Use the arrow keys to choose a place.`;
 const TYPE_CODES = { house: 'h', warehouse: 'w', stone: 's', open: 'o', river: 'r', wall: 'l' };
 const KEY_STEPS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
-const NEIGHBOURS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
 
 function clamp(value, lo, hi) {
   return Math.min(hi, Math.max(lo, value));
@@ -454,7 +457,9 @@ export function createMapView({ canvas, cols = 28, rows = 18, landmarks = [], on
         const i = y * cols + x;
         drawGuard(ctx, px, py, ts, index.byTile[i] ? badges.get(i) || 0 : tile.guard);
       }
-      if (tile.district && evacuated.has(tile.district) && !tile.burnt && !(tile.fire > 0)) drawFootprint(ctx, px, py, ts);
+      // Evacuation belongs to the district, so the mark stays on burning and burnt tiles too;
+      // it is drawn after flames and smoke, and its parchment fill reads on burnt ground.
+      if (tile.district && evacuated.has(tile.district)) drawFootprint(ctx, px, py, ts);
     });
   }
 
@@ -585,17 +590,28 @@ export function createMapView({ canvas, cols = 28, rows = 18, landmarks = [], on
     return Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < cols && y < rows;
   }
 
+  // Embers fly from event.from, else from the nearest tile already burning before the
+  // turn; ties go to the most upwind tile. With no fire anywhere there is no arc.
   function sparkSource(prev, event, wind) {
     if (event.from && inBounds(event.from.x, event.from.y)) return { x: event.from.x, y: event.from.y };
     const tiles = prev && Array.isArray(prev.tiles) ? prev.tiles : [];
-    for (const [dx, dy] of NEIGHBOURS) {
-      const x = event.x + dx;
-      const y = event.y + dy;
-      if (inBounds(x, y) && tiles[y * cols + x] && tiles[y * cols + x].fire > 0) return { x, y };
+    const wx = Number(wind && wind.dx) || 0;
+    const wy = Number(wind && wind.dy) || 0;
+    let best = null;
+    for (let y = 0; y < rows; y += 1) {
+      for (let x = 0; x < cols; x += 1) {
+        const tile = tiles[y * cols + x];
+        if (!tile || !(tile.fire > 0) || (x === event.x && y === event.y)) continue;
+        const dx = event.x - x;
+        const dy = event.y - y;
+        const distance = dx * dx + dy * dy;
+        const downwind = dx * wx + dy * wy;
+        if (!best || distance < best.distance || (distance === best.distance && downwind > best.downwind)) {
+          best = { x, y, distance, downwind };
+        }
+      }
     }
-    const ux = -(Number(wind && wind.dx) || 0);
-    const uy = -(Number(wind && wind.dy) || 0);
-    return (ux || uy) && inBounds(event.x + ux, event.y + uy) ? { x: event.x + ux, y: event.y + uy } : null;
+    return best ? { x: best.x, y: best.y } : null;
   }
 
   function planAnimation(prev, next, events) {
@@ -775,7 +791,10 @@ export function createMapView({ canvas, cols = 28, rows = 18, landmarks = [], on
     const rect = typeof canvas.getBoundingClientRect === 'function' ? canvas.getBoundingClientRect() : null;
     cssW = Math.max(0, Number(rect && rect.width) || 0);
     cssH = Math.max(0, Number(rect && rect.height) || 0);
-    dpr = clamp(Number(win.devicePixelRatio) || 1, 1, 3);
+    const measured = Number(win.devicePixelRatio);
+    dpr = Number.isFinite(measured) && measured > 0 ? measured : 1;
+    const cssArea = cssW * cssH;
+    if (cssArea * dpr * dpr > MAX_BACKING_PIXELS) dpr = Math.sqrt(MAX_BACKING_PIXELS / cssArea);
     const backingW = Math.max(1, Math.round(cssW * dpr));
     const backingH = Math.max(1, Math.round(cssH * dpr));
     if (canvas.width !== backingW) canvas.width = backingW;
