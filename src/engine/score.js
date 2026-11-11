@@ -37,7 +37,7 @@ const ratingFor = (housesLost) => {
   return { id, label, text };
 };
 
-/** Scores a state at any moment; tiles still burning count as lost. */
+/** Scores a state at any moment; houses on burning tiles count as lost, landmark tiles only once the game ends. */
 export function getScore(state) {
   let housesLost = 0;
   let housesPulledDown = 0;
@@ -49,8 +49,9 @@ export function getScore(state) {
   }
   const landmarksSaved = [];
   const landmarksLost = [];
+  // Burning landmark tiles can still be saved during play; they only count as burnt once the game is over.
   for (const landmark of LANDMARKS.filter((l) => l.scored)) {
-    const lost = state.lostLandmarks.includes(landmark.id) || isLandmarkGone(state, landmark, true);
+    const lost = state.lostLandmarks.includes(landmark.id) || isLandmarkGone(state, landmark, state.over);
     (lost ? landmarksLost : landmarksSaved).push(landmark.id);
   }
   return {

@@ -91,7 +91,6 @@ const refusalReasons = () => {
     [base, { type: 'douse', x: 0, y: 4 }],
     [edit(base, (s) => { engine.tileAt(s, 10, 4).burnt = true; }), { type: 'douse', x: 10, y: 4 }],
     [edit(base, (s) => { engine.tileAt(s, 10, 4).cleared = true; }), { type: 'douse', x: 10, y: 4 }],
-    [edit(base, (s) => { engine.tileAt(s, 10, 4).wet = true; }), { type: 'douse', x: 10, y: 4 }],
     [base, { type: 'hooks', x: 9, y: 4 }],
     [base, { type: 'hooks', x: 19, y: 14 }],
     [ready, { type: 'gunpowder', x: 9, y: 4 }],

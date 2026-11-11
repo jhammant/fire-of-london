@@ -102,14 +102,12 @@ export function endTurn(state) {
   changeWind(next, rng, events);
   refreshResources(next, events);
   next.rngState = rng.state();
-  if (!anyBurning(next)) {
-    finishGame(next, 'extinguished', events);
-  } else {
-    for (const { turn, id } of DATE_TRIGGERS) {
-      if (next.turn === turn) fireTrigger(next, id, events);
-    }
-    if (next.wind.strength <= 1) fireTrigger(next, 'wind-drops', events);
-    if (next.turn >= LAST_TURN) finishGame(next, 'thursday', events);
+  // The turn and wind just reached count even if the last flame went out on the way, so these come before 'end'.
+  for (const { turn, id } of DATE_TRIGGERS) {
+    if (next.turn === turn) fireTrigger(next, id, events);
   }
+  if (next.wind.strength <= 1) fireTrigger(next, 'wind-drops', events);
+  if (!anyBurning(next)) finishGame(next, 'extinguished', events);
+  else if (next.turn >= LAST_TURN) finishGame(next, 'thursday', events);
   return { state: next, events };
 }

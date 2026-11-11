@@ -1,6 +1,7 @@
 // The historical wind: an easterly gale until Tuesday evening, then it drops.
 
-const PUSH = {
+/** For each compass point the wind blows from, the [dx, dy] it pushes the fire. */
+export const WIND_PUSH = {
   N: [0, 1],
   NE: [-1, 1],
   E: [-1, 0],
@@ -31,7 +32,7 @@ const labelOf = (from, strength) => {
 };
 
 const makeWind = (from, strength) => {
-  const [dx, dy] = PUSH[from];
+  const [dx, dy] = WIND_PUSH[from];
   return { from, strength, dx, dy, label: labelOf(from, strength) };
 };
 

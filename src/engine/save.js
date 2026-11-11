@@ -2,24 +2,32 @@
 
 import { COLS, ROWS } from '../data/map.js';
 import { TILE_TYPES, DIFFICULTY_SETTINGS } from './config.js';
+import { WIND_PUSH } from './wind.js';
 
 const SAVE_VERSION = 1;
 
 const isInt = (value) => Number.isInteger(value);
+const isIntIn = (value, min, max) => isInt(value) && value >= min && value <= max;
 const isBool = (value) => typeof value === 'boolean';
 const isObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
 const isStringArray = (value) => Array.isArray(value) && value.every((item) => typeof item === 'string');
 
+// The wind must blow from a compass point, at strength 0-3, pushing the fire the way that point implies.
+const isWind = (value) => {
+  if (!isObject(value) || typeof value.from !== 'string' || !Object.hasOwn(WIND_PUSH, value.from)) return false;
+  const [dx, dy] = WIND_PUSH[value.from];
+  return isIntIn(value.strength, 0, 3) && value.dx === dx && value.dy === dy && typeof value.label === 'string';
+};
+
 const STATE_CHECKS = {
   seed: isInt,
   rngState: isInt,
-  difficulty: (value) => Object.hasOwn(DIFFICULTY_SETTINGS, value),
+  difficulty: (value) => typeof value === 'string' && Object.hasOwn(DIFFICULTY_SETTINGS, value),
   turn: (value) => isInt(value) && value >= 0,
   cols: (value) => value === COLS,
   rows: (value) => value === ROWS,
   tiles: (value) => Array.isArray(value) && value.length === COLS * ROWS,
-  wind: (value) => isObject(value) && typeof value.from === 'string' && isInt(value.strength)
-    && isInt(value.dx) && isInt(value.dy) && typeof value.label === 'string',
+  wind: isWind,
   resources: (value) => isObject(value) && ['ap', 'men', 'powder', 'goodwill'].every((key) => isInt(value[key])),
   limits: (value) => isObject(value) && ['ap', 'men', 'goodwill'].every((key) => isInt(value[key])),
   authority: isBool,

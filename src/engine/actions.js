@@ -37,10 +37,7 @@ const checkBurnable = (tile) => {
 
 const checkDouse = (state, tile) => {
   if (!isFlammable(tile.type)) return no('There is nothing there that can burn.');
-  const burnable = checkBurnable(tile);
-  if (!burnable.ok) return burnable;
-  if (tile.wet) return no('That tile is still soaked. Douse it again next turn.');
-  return ok;
+  return checkBurnable(tile);
 };
 
 const checkHooks = (state, tile) => {

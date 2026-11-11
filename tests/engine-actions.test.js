@@ -109,17 +109,22 @@ test('douse puts out a tile at fire level 1 with an extinguish event', () => {
   assert.deepEqual(result.events[0], { type: 'extinguish', ...engine.START });
 });
 
-test('douse is refused on a tile that is still soaked this turn, and allowed again next turn', () => {
+test('douse may target a tile that is still soaked, and the soaking lasts until the end of the next turn', () => {
   // Arrange
-  const state = engine.applyAction(fresh(), { type: 'douse', ...HOUSE }).state;
+  const state = fresh();
+  const soaked = engine.applyAction(state, { type: 'douse', ...engine.START }).state;
 
   // Act
-  const nextTurn = engine.endTurn(state).state;
+  const again = engine.applyAction(soaked, { type: 'douse', ...engine.START });
+  const nextTurn = engine.endTurn(soaked).state;
 
   // Assert
-  assertRefused(state, { type: 'douse', ...HOUSE }, 'second douse');
-  assert.equal(tile(nextTurn, HOUSE).wet, false);
-  assert.equal(engine.canAct(nextTurn, { type: 'douse', ...HOUSE }).ok, true);
+  assert.equal(tile(soaked, engine.START).wet, true);
+  assert.equal(again.ok, true);
+  assert.equal(tile(again.state, engine.START).fire, 0);
+  assert.equal(tile(again.state, engine.START).wet, true);
+  assert.equal(again.state.resources.ap, state.resources.ap - 2);
+  assert.equal(tile(nextTurn, engine.START).wet, false);
 });
 
 test('hooks pull down a house: cleared, people safe, first-hooks fired once', () => {
