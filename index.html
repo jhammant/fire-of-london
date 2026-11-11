@@ -55,9 +55,12 @@
           <section class="panel-section" aria-labelledby="heading-actions">
             <h2 id="heading-actions" class="panel-heading">Actions</h2>
             <div id="actions" class="actions"></div>
-            <button id="btn-end-turn" class="btn btn-primary end-turn" type="button">End turn</button>
-            <p class="end-turn-note">Each turn is six hours.</p>
           </section>
+
+          <div class="turn-bar">
+            <button id="btn-end-turn" class="btn btn-primary end-turn" type="button" aria-describedby="end-turn-note">End turn</button>
+            <p id="end-turn-note" class="visually-hidden">Six hours pass and the fire spreads.</p>
+          </div>
 
           <section class="panel-section" aria-labelledby="heading-game">
             <h2 id="heading-game" class="visually-hidden">Game</h2>
