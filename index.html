@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#8b2e16">
+  <meta name="description" content="Fire Of London: a turn-based history game. Lead London's fight against the Great Fire of September 1666, one six-hour turn at a time.">
+  <title>Fire Of London</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="src/ui/styles.css">
+  <link rel="stylesheet" href="src/ui/screens.css">
+  <script type="module" src="src/main.js"></script>
+</head>
+<body>
+  <div id="app" class="app">
+    <a class="skip-link" href="#panel">Skip to the command panel</a>
+
+    <header class="site-header">
+      <h1 class="site-title">Fire Of London</h1>
+      <p class="site-subtitle">September 1666</p>
+    </header>
+
+    <div class="layout">
+      <main class="stage">
+        <div id="map-wrap" class="map-wrap">
+          <canvas id="map" class="map" tabindex="0" role="application" aria-label="Map of the City of London in 1666. Use the arrow keys to choose a square." aria-describedby="map-help"></canvas>
+          <p id="map-help" class="visually-hidden">Choose a square, then pick an action. Keys 1 to 6 use the actions.</p>
+        </div>
+      </main>
+
+      <aside id="panel" class="panel" aria-label="Command panel" tabindex="-1">
+        <div class="sheet-bar">
+          <button id="btn-sheet" class="btn sheet-toggle" type="button" aria-expanded="true" aria-controls="panel-body">Panel</button>
+        </div>
+
+        <div id="panel-body" class="panel-body">
+          <section class="panel-section time-section" aria-labelledby="heading-time">
+            <h2 id="heading-time" class="panel-heading">Time and wind</h2>
+            <p id="date-time" class="date-time">Sunday 2 September, 1am</p>
+            <p id="wind-info" class="wind-info"></p>
+          </section>
+
+          <section class="panel-section" aria-labelledby="heading-resources">
+            <h2 id="heading-resources" class="panel-heading">Your supplies</h2>
+            <dl id="resources" class="resources"></dl>
+          </section>
+
+          <section class="panel-section" aria-labelledby="heading-tile">
+            <h2 id="heading-tile" class="panel-heading">Chosen square</h2>
+            <div id="tile-info" class="tile-info">
+              <p class="tile-hint">Choose a square on the map.</p>
+            </div>
+          </section>
+
+          <section class="panel-section" aria-labelledby="heading-actions">
+            <h2 id="heading-actions" class="panel-heading">Actions</h2>
+            <div id="actions" class="actions"></div>
+          </section>
+
+          <div class="turn-bar">
+            <button id="btn-end-turn" class="btn btn-primary end-turn" type="button" aria-describedby="end-turn-note">End turn</button>
+            <p id="end-turn-note" class="visually-hidden">Six hours pass and the fire spreads.</p>
+          </div>
+
+          <section class="panel-section" aria-labelledby="heading-game">
+            <h2 id="heading-game" class="visually-hidden">Game</h2>
+            <div class="toolbar">
+              <button id="btn-chronicle" class="btn" type="button">Chronicle</button>
+              <button id="btn-menu" class="btn" type="button">Menu</button>
+              <button id="btn-help" class="btn" type="button">Help</button>
+              <button id="btn-zoom" class="btn" type="button" aria-pressed="false">Zoom in</button>
+            </div>
+          </section>
+
+          <section class="panel-section" aria-labelledby="heading-log">
+            <h2 id="heading-log" class="panel-heading">What has happened</h2>
+            <ol id="log" class="log"></ol>
+          </section>
+
+          <details id="legend" class="legend panel-section">
+            <summary class="legend-summary">Map key</summary>
+          </details>
+        </div>
+      </aside>
+    </div>
+
+    <noscript>
+      <p class="noscript">Fire Of London needs JavaScript. Please turn it on, then load the page again.</p>
+    </noscript>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="tutorial-root"></div>
+  <div id="live" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>
