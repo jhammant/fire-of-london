@@ -1,0 +1,12 @@
+{
+  "name": "fire-of-london",
+  "version": "0.1.0",
+  "description": "Fire Of London: a turn-based browser strategy game about the Great Fire of 1666",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 -m http.server 8080"
+  }
+}
