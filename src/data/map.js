@@ -108,7 +108,7 @@ export const LANDMARKS = [
     id: 'pudding-lane',
     name: 'Pudding Lane',
     kind: 'bakery',
-    tiles: [[19, 13], [19, 14]],
+    tiles: [[19, 14], [19, 13]],
     scored: false,
     blurb: 'Thomas Farriner the King\'s baker had his bakery here, and this is where the fire began.'
   },

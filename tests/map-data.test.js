@@ -142,6 +142,7 @@ test('START is a house tile of Pudding Lane in the east, near the river', () => 
   assert.ok(x >= 0 && x < COLS && y >= 0 && y < ROWS);
   assert.equal(typeAt(x, y), 'house');
   assert.ok(inPuddingLane);
+  assert.deepEqual(landmark('pudding-lane').tiles[0], [x, y], 'START is the first Pudding Lane tile');
   assert.ok(x >= 14);
   assert.ok(16 - y <= 4);
   assert.deepEqual(engine.START, START);
