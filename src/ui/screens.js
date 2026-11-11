@@ -403,7 +403,8 @@ export function createScreens({ doc, root, reducedMotion = false } = {}) {
             else render(index + 1);
           });
           footer.append(primary);
-          ctx.show(dialog, primary);
+          // No explicit target: focus goes to the first control (Learn more when the card has it).
+          ctx.show(dialog);
         };
         render(0);
       },

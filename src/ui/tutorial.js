@@ -92,37 +92,28 @@ function clamp(value, low, high) {
   return Math.min(Math.max(value, low), Math.max(low, high));
 }
 
+/** True when the target rect overlaps the viewport at all. */
+function inViewport(rect, viewport) {
+  return rect.right > 0 && rect.bottom > 0 && rect.left < viewport.width && rect.top < viewport.height;
+}
+
 /** Picks a spot for the coach bubble beside the target rect, or null when it only fits at the top. */
 export function placeCoach(target, bubble, viewport) {
   const clampX = (x) => clamp(x, MARGIN, viewport.width - bubble.width - MARGIN);
   const clampY = (y) => clamp(y, MARGIN, viewport.height - bubble.height - MARGIN);
+  // A spot only fits when the whole bubble stays inside the margins on both axes,
+  // so a target scrolled past one edge can never push the bubble off the other.
+  const onScreen = ({ left, top }) => left >= MARGIN
+    && left + bubble.width <= viewport.width - MARGIN
+    && top >= MARGIN
+    && top + bubble.height <= viewport.height - MARGIN;
   const spots = [
-    {
-      side: 'right',
-      fits: target.right + GAP + bubble.width <= viewport.width - MARGIN,
-      left: target.right + GAP,
-      top: clampY(target.top),
-    },
-    {
-      side: 'left',
-      fits: target.left - GAP - bubble.width >= MARGIN,
-      left: target.left - GAP - bubble.width,
-      top: clampY(target.top),
-    },
-    {
-      side: 'below',
-      fits: target.bottom + GAP + bubble.height <= viewport.height - MARGIN,
-      left: clampX(target.left),
-      top: target.bottom + GAP,
-    },
-    {
-      side: 'above',
-      fits: target.top - GAP - bubble.height >= MARGIN,
-      left: clampX(target.left),
-      top: target.top - GAP - bubble.height,
-    },
+    { side: 'right', left: target.right + GAP, top: clampY(target.top) },
+    { side: 'left', left: target.left - GAP - bubble.width, top: clampY(target.top) },
+    { side: 'below', left: clampX(target.left), top: target.bottom + GAP },
+    { side: 'above', left: clampX(target.left), top: target.top - GAP - bubble.height },
   ];
-  const spot = spots.find((candidate) => candidate.fits);
+  const spot = spots.find(onScreen);
   return spot ? { side: spot.side, left: spot.left, top: spot.top } : null;
 }
 
@@ -159,7 +150,8 @@ export function createTutorial({ doc, root, onFinish } = {}) {
     const view = doc.defaultView;
     const viewport = { width: view?.innerWidth ?? 0, height: view?.innerHeight ?? 0 };
     const rect = target ? target.getBoundingClientRect() : null;
-    const visible = Boolean(rect && rect.width > 0 && rect.height > 0);
+    // A target scrolled wholly out of view counts as missing: the bubble goes to the top.
+    const visible = Boolean(rect && rect.width > 0 && rect.height > 0 && inViewport(rect, viewport));
     const spot = visible && viewport.width >= NARROW_WIDTH
       ? placeCoach(rect, parts.bubble.getBoundingClientRect(), viewport)
       : null;
