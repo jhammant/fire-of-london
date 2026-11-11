@@ -134,6 +134,7 @@ export const CARDS = deepFreeze([
     title: 'Gunpowder Firebreaks',
     text: 'From Tuesday, men used gunpowder to blow up whole rows of houses. This made wide gaps much faster than firehooks could. The gaps, called firebreaks, left the flames with nothing to burn.',
     trigger: 'first-gunpowder',
+    when: TUESDAY,
     learnMore: 'Many people were frightened of the blasts at first, and owners did not want their houses destroyed. Pepys suggested bringing in workmen from the navy\'s dockyards to help. The firebreaks worked best once the wind dropped on Tuesday night.',
     quiz: {
       question: 'Why did firefighters blow up houses with gunpowder?',
@@ -192,6 +193,7 @@ export const CARDS = deepFreeze([
     title: 'Saving the Tower',
     text: 'The Tower of London held a huge store of gunpowder. If the fire reached it, the blast could have been terrible. Houses nearby were blown up to make a gap, and the Tower survived.',
     trigger: 'tower',
+    when: TUESDAY,
     learnMore: 'Pepys wrote that the blowing up of houses next to the Tower began on Tuesday. The blasts frightened people more than anything at first. But they worked: the fire stopped short of the Tower, and its gunpowder stayed safe.',
     quiz: {
       question: 'What was stored in the Tower of London that made the fire so dangerous there?',
