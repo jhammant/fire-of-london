@@ -963,14 +963,18 @@ describe('tutorial and page (sections 6a and 6f)', () => {
 
     // Act
     const ids = steps.map((step) => step.id);
-    const badWaits = steps.filter((step) => step.waitFor !== null && (
-      !WAIT_EVENTS.includes(step.waitFor.event)
-      || (step.waitFor.type !== undefined && step.waitFor.type !== null && !actionIds.includes(step.waitFor.type))
-    )).map((step) => `${step.id}: ${JSON.stringify(step.waitFor)}`);
+    // waitFor is null or { event, type }; type is optional (left out), but when present it must be an action id.
+    const isValidWait = (wait) => wait === null || (
+      typeof wait === 'object'
+      && WAIT_EVENTS.includes(wait.event)
+      && (wait.type === undefined || actionIds.includes(wait.type))
+    );
+    const badWaits = steps.filter((step) => !isValidWait(step.waitFor))
+      .map((step) => `${step.id}: ${String(JSON.stringify(step.waitFor))}`);
 
     // Assert
     assert.equal(new Set(ids).size, ids.length, 'tutorial step ids must be unique');
-    assert.deepEqual(badWaits, [], 'waitFor.event must be a 6f event and waitFor.type an action id');
+    assert.deepEqual(badWaits, [], 'waitFor must be null or { event, type } with a 6f event and, when type is given, an action id');
   });
 
   it('tutorial targets use only 6a ids in index.html and [data-action] action ids', () => {
@@ -978,21 +982,27 @@ describe('tutorial and page (sections 6a and 6f)', () => {
     const targets = TUTORIAL_STEPS.filter((step) => step.target !== null).map((step) => ({ id: step.id, target: step.target }));
 
     // Act
+    // [data-action=...] with the value double-quoted, single-quoted or bare; CSS allows whitespace inside the brackets.
+    const dataAction = /\[\s*data-action\s*=\s*(?:"([^"]*)"|'([^']*)'|([\w-]+))\s*\]/g;
     const problems = targets.flatMap(({ id, target }) => {
+      if (typeof target !== 'string') {
+        return [`${id}: target must be null or a CSS selector string`];
+      }
       const found = [];
-      for (const [, pageId] of target.matchAll(/#([A-Za-z][\w-]*)/g)) {
+      const idsOnly = target.replace(dataAction, (_match, double, single, bare) => {
+        const action = double ?? single ?? bare;
+        if (!actionIds.includes(action)) {
+          found.push(`${id}: data-action '${action}' is not an action id`);
+        }
+        return ' ';
+      });
+      for (const [, pageId] of idsOnly.matchAll(/#([A-Za-z][\w-]*)/g)) {
         if (!PAGE_IDS.includes(pageId) || counts.get(pageId) !== 1) {
           found.push(`${id}: #${pageId} is not a 6a id in index.html`);
         }
       }
-      for (const [, , action] of target.matchAll(/\[data-action=(['"]?)([\w-]+)\1\]/g)) {
-        if (!actionIds.includes(action)) {
-          found.push(`${id}: data-action '${action}' is not an action id`);
-        }
-      }
-      const rest = target
+      const rest = idsOnly
         .replace(/#[A-Za-z][\w-]*/g, '')
-        .replace(/\[data-action=(['"]?)[\w-]+\1\]/g, '')
         .replace(/[\s,>+~]/g, '');
       if (rest !== '') {
         found.push(`${id}: '${target}' uses '${rest}', but targets may only use 6a ids and [data-action]`);

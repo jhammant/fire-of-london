@@ -176,6 +176,39 @@ describe('stripComments', () => {
     // Assert
     assert.equal(result, 'x(); ');
   });
+
+  it('reads / after a postfix ++ or -- as division, so the comment after it is removed', () => {
+    // Arrange
+    const source = "a = count++ / 2; // import './one.js';\nb = left-- / 2 /* import './two.js' */;";
+
+    // Act
+    const result = stripComments(source);
+
+    // Assert
+    assert.equal(result, 'a = count++ / 2; \nb = left-- / 2  ;');
+  });
+
+  it('keeps regex literals after keywords and inside template substitutions', () => {
+    // Arrange
+    const source = 'return /\\/\\/x/.test(s); // c\nconst t = `${/\\/\\//.source}`; // d';
+
+    // Act
+    const result = stripComments(source);
+
+    // Assert
+    assert.equal(result, 'return /\\/\\/x/.test(s); \nconst t = `${/\\/\\//.source}`; ');
+  });
+
+  it('keeps a hashbang line', () => {
+    // Arrange
+    const source = '#!/usr/bin/env node\n// note\nrun();';
+
+    // Act
+    const result = stripComments(source);
+
+    // Assert
+    assert.equal(result, '#!/usr/bin/env node\n\nrun();');
+  });
 });
 
 describe('extractImports', () => {
@@ -300,6 +333,88 @@ describe('extractImports', () => {
     assert.deepEqual(specifiers, ['./a.js', './b.js', './c.js']);
   });
 
+  it('finds dynamic imports with a trailing comma or an options argument, but not computed ones', () => {
+    // Arrange
+    const source = [
+      "const a = import('./trailing.js',);",
+      "const b = import('./options.js', { with: { type: 'json' } });",
+      "const c = import('./base' + suffix);",
+      "const d = import.source('./phase.js');"
+    ].join('\n');
+
+    // Act
+    const specifiers = extractImports(source);
+
+    // Assert
+    assert.deepEqual(specifiers, ['./trailing.js', './options.js', './phase.js']);
+  });
+
+  it('finds imports with Unicode bindings and quoted export names', () => {
+    // Arrange
+    const source = [
+      "import { café } from './unicode.js';",
+      "import { 'a-b' as ab } from './quoted-import.js';",
+      "export { thing as 'a-b' } from './quoted-export.js';",
+      "export * as 'name space' from './quoted-star.js';"
+    ].join('\n');
+
+    // Act
+    const specifiers = extractImports(source);
+
+    // Assert
+    assert.deepEqual(specifiers, ['./unicode.js', './quoted-import.js', './quoted-export.js', './quoted-star.js']);
+  });
+
+  it('ignores import text inside strings and templates but finds imports in template substitutions', () => {
+    // Arrange
+    const source = [
+      `const help = "Use import('./example.js') here";`,
+      "const sample = `export { thing } from './sample.js';`;",
+      "const quoted = 'import \"./quoted.js\"';",
+      "const loaded = `Module: ${import('./interpolated.js')}`;",
+      "import './real.js';"
+    ].join('\n');
+
+    // Act
+    const specifiers = extractImports(source);
+
+    // Assert
+    assert.deepEqual(specifiers, ['./interpolated.js', './real.js']);
+  });
+
+  it('does not read a local export list as export-from when an import follows', () => {
+    // Arrange
+    const source = "export { a, b }\nimport c from './c.js'\nexport { d }";
+
+    // Act
+    const specifiers = extractImports(source);
+
+    // Assert
+    assert.deepEqual(specifiers, ['./c.js']);
+  });
+
+  it('ignores imports in a comment that follows a division', () => {
+    // Arrange
+    const source = "const ratio = count++ / 2; // import './comment-only.js';\nimport './real.js';";
+
+    // Act
+    const specifiers = extractImports(source);
+
+    // Assert
+    assert.deepEqual(specifiers, ['./real.js']);
+  });
+
+  it('ignores import methods reached by optional chaining and object keys named import', () => {
+    // Arrange
+    const source = "loader?.import('./method.js');\nconst table = { import: './key.js' };";
+
+    // Act
+    const specifiers = extractImports(source);
+
+    // Assert
+    assert.deepEqual(specifiers, []);
+  });
+
   it('returns an empty list when there are no imports', () => {
     // Arrange
     const source = 'export function add(a, b) {\n  return a + b;\n}\n';
@@ -416,6 +531,27 @@ describe('extractHtmlRefs', () => {
 
     // Assert
     assert.deepEqual(refs, []);
+  });
+
+  it('ignores markup written as text inside script, style, textarea and title', () => {
+    // Arrange
+    const html = [
+      '<title>Use <a href="title.html"> here</title>',
+      '<style>p::after { content: "<img src=\'style.png\'>"; }</style>',
+      '<script>const example = \'<img src="script.png">\';</SCRIPT >',
+      '<textarea><a href="textarea.html">Example markup</a></textarea>',
+      '<script type="module" src="src/main.js"></script>',
+      '<img src="real.png">'
+    ].join('\n');
+
+    // Act
+    const refs = extractHtmlRefs(html);
+
+    // Assert
+    assert.deepEqual(refs, [
+      { tag: 'script', attr: 'src', value: 'src/main.js' },
+      { tag: 'img', attr: 'src', value: 'real.png' }
+    ]);
   });
 });
 
